@@ -1,0 +1,9 @@
+{
+    "sprites": {
+        "character": "images/character_bitmap.png",
+        "food": "images/food.png"
+    },
+    "fonts": {
+        "lowres_pixel": "fonts/lowres_pixel.otf"
+    }
+}
