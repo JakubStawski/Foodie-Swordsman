@@ -1,4 +1,4 @@
-import { Application, Container } from "pixi.js";
+import { Application, Container, Ticker } from "pixi.js";
 
 const DESIGN_WIDTH = 450;
 const DESIGN_HEIGHT = 800;
@@ -26,6 +26,10 @@ export class App {
 
     public get stage(): Container {
         return this._app.stage;
+    }
+
+    public get ticker(): Ticker {
+        return this._app.ticker;
     }
 
     /**
