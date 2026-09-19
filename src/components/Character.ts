@@ -52,6 +52,11 @@ export class Character extends Container {
         this._bindKeys();
     }
 
+    /** Whether the catch (attack) animation is currently playing. */
+    public get isCatching(): boolean {
+        return this._isCatching;
+    }
+
     /**
      * Advance movement and animation based on held keys.
      * @param delta ticker delta time
