@@ -11,7 +11,7 @@ export class App {
         this._app = new Application({
             width: DESIGN_WIDTH,
             height: DESIGN_HEIGHT,
-            antialias: true,
+            antialias: false,
             backgroundAlpha: 0,
             resolution: Math.min(window.devicePixelRatio || 1, 2),
         });
@@ -21,6 +21,7 @@ export class App {
         window.addEventListener('resize', this._resize.bind(this));
         this._resize();
 
+        // @ts-ignore
         globalThis.__PIXI_APP__ = this._app;
     }
 

@@ -1,4 +1,4 @@
-import { Assets, Texture } from "pixi.js";
+import { Assets, MIPMAP_MODES, SCALE_MODES, Texture } from "pixi.js";
 import { GfxConfig } from "./types";
 
 /**
@@ -32,6 +32,12 @@ export class Loader {
         Assets.addBundle("fonts", fontBundle);
 
         await Assets.loadBundle(["sprites", "fonts"]);
+
+        for (const name of Object.keys(this._config.sprites)) {
+            const texture = Assets.get<Texture>(name);
+            texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
+            texture.baseTexture.mipmap = MIPMAP_MODES.OFF;
+        }
     }
 
     /**

@@ -44,6 +44,7 @@ export class Character extends Container {
 
         this._sprite = new AnimatedSprite(this._anims.idle);
         this._sprite.anchor.set(0.5);
+        this._sprite.roundPixels = true;
         this._sprite.animationSpeed = ANIM_SPEED;
         this._sprite.loop = true;
         this._sprite.play();
@@ -147,5 +148,10 @@ export class Character extends Container {
         window.addEventListener("keyup", (event) => {
             this._keys.delete(event.code);
         });
+    }
+
+    /** Whether the catch (attack) animation is currently playing. */
+    public get isCatching(): boolean {
+        return this._isCatching;
     }
 }
