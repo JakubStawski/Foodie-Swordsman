@@ -1,6 +1,6 @@
 import { Container } from "pixi.js";
 import { Background } from "../components/Background";
-import { Button } from "../components/Button";
+import { Button, BUTTON_GAP } from "../components/Button";
 import { Logo } from "../components/Logo";
 import { Loader } from "../core/Loader";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
@@ -17,14 +17,15 @@ export class MainMenu extends Container {
         this.name = "MainMenu";
 
         const font = loader.getFont("pixelify_sans");
-        const play = new Button("Play!", font, () => gameStore.getState().start());
+        const plaque = loader.getAsset("button");
+        const play = new Button("Play!", font, plaque, () => gameStore.getState().start());
         play.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42);
 
-        const help = new Button("Help", font, () => gameStore.getState().openHelp());
-        help.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42 + 56);
+        const help = new Button("Help", font, plaque, () => gameStore.getState().openHelp());
+        help.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42 + BUTTON_GAP);
 
-        const credits = new Button("Credits", font, () => gameStore.getState().openCredits());
-        credits.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42 + 112);
+        const credits = new Button("Credits", font, plaque, () => gameStore.getState().openCredits());
+        credits.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42 + BUTTON_GAP * 2);
 
         this._logo = new Logo(font, loader.getAsset("sword_icon"));
         this._logo.position.set(DESIGN_WIDTH / 2, 48);
