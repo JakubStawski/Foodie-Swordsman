@@ -42,7 +42,9 @@ export class Help extends Container {
         controls.texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
         controls.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.48);
 
-        const back = new Button("Back to main menu", font, () => gameStore.getState().quit());
+        const back = new Button("Back to main menu", font, loader.getAsset("button"), () =>
+            gameStore.getState().quit(),
+        );
         back.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.72);
 
         this.addChild(

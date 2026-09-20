@@ -1,5 +1,5 @@
 import { Container, Graphics, Rectangle } from "pixi.js";
-import { Button } from "../components/Button";
+import { Button, BUTTON_GAP } from "../components/Button";
 import { Logo } from "../components/Logo";
 import { Loader } from "../core/Loader";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
@@ -26,11 +26,12 @@ export class Pause extends Container {
         this._logo = new Logo(font, loader.getAsset("sword_icon"));
         this._logo.position.set(DESIGN_WIDTH / 2, 48);
 
-        const resume = new Button("Resume", font, () => gameStore.getState().resume());
+        const plaque = loader.getAsset("button");
+        const resume = new Button("Resume", font, plaque, () => gameStore.getState().resume());
         resume.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.48);
 
-        const exit = new Button("Exit", font, () => gameStore.getState().quit());
-        exit.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.48 + 56);
+        const exit = new Button("Exit", font, plaque, () => gameStore.getState().quit());
+        exit.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.48 + BUTTON_GAP);
 
         this.addChild(dim, this._logo, resume, exit);
     }

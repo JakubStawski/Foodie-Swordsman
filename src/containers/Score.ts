@@ -1,6 +1,6 @@
 import { Container, SCALE_MODES, Text, TextStyle } from "pixi.js";
 import { Background } from "../components/Background";
-import { Button } from "../components/Button";
+import { Button, BUTTON_GAP } from "../components/Button";
 import { Logo } from "../components/Logo";
 import { Loader } from "../core/Loader";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
@@ -28,11 +28,12 @@ export class Score extends Container {
         this._bestScore = this._label("Best score: 0", font);
         this._bestScore.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.38 + 48);
 
-        const mainMenu = new Button("Main menu", font, () => gameStore.getState().quit());
+        const plaque = loader.getAsset("button");
+        const mainMenu = new Button("Main menu", font, plaque, () => gameStore.getState().quit());
         mainMenu.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.58);
 
-        const tryAgain = new Button("Try again", font, () => gameStore.getState().start());
-        tryAgain.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.58 + 56);
+        const tryAgain = new Button("Try again", font, plaque, () => gameStore.getState().start());
+        tryAgain.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.58 + BUTTON_GAP);
 
         this.addChild(
             new Background([
