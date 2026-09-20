@@ -7,6 +7,9 @@
         "bg_03": "images/bg_03.png",
         "bg_04": "images/bg_04.png",
         "bg_mask": "images/bg_mask.png",
+        "heart": "images/hearts.png",
+        "keyboard_letters": "images/keyboard-letters.png",
+        "keyboard_special": "images/keyboard-special.png",
         "sword_icon": "images/sword_icon.png",
         "button": "images/button.png"
     },

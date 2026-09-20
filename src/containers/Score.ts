@@ -7,7 +7,7 @@ import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
 import { gameStore } from "../store/gameStore";
 
 /**
- * End-of-round screen. Best score is a placeholder until that logic exists.
+ * End-of-round screen. Best score is kept in localStorage.
  */
 export class Score extends Container {
     private readonly _logo: Logo;
@@ -51,11 +51,12 @@ export class Score extends Container {
     }
 
     /**
-     * Copy the current round's points onto the labels. Best score stays a stub.
+     * Copy this round's points and the saved best score onto the labels.
      */
     public refresh(): void {
-        this._yourScore.text = `Your score: ${gameStore.getState().points}`;
-        this._bestScore.text = "Best score: 0";
+        const { points, bestScore } = gameStore.getState();
+        this._yourScore.text = `Your score: ${points}`;
+        this._bestScore.text = `Best score: ${bestScore}`;
     }
 
     /**

@@ -9,12 +9,14 @@ export type GamePhase =
     | "pause"
     | "score";
 
-export const INITIAL_HP = 3;
+export const INITIAL_HP = 10;
+const BEST_SCORE_KEY = "foodie-swordsman.bestScore";
 
 export type GameState = {
     phase: GamePhase;
     hp: number;
     points: number;
+    bestScore: number;
 };
 
 type GameActions = {
@@ -58,6 +60,41 @@ function initialData(): Pick<GameState, "hp" | "points"> {
 }
 
 /**
+ * Last saved high score, or 0 if none / storage is blocked.
+ */
+function loadBestScore(): number {
+    try {
+        const value = Number(localStorage.getItem(BEST_SCORE_KEY));
+        return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+    } catch {
+        return 0;
+    }
+}
+
+/**
+ * Persist a new high score. Ignores private-mode / quota failures.
+ */
+function saveBestScore(score: number): void {
+    try {
+        localStorage.setItem(BEST_SCORE_KEY, String(score));
+    } catch {
+        // Storage can be unavailable; keep the in-memory value anyway.
+    }
+}
+
+/**
+ * Enter the score screen, promoting bestScore when this round is higher.
+ */
+function finishRound(points: number, bestScore: number): Pick<GameState, "phase" | "bestScore"> {
+    if (points > bestScore) {
+        saveBestScore(points);
+        return { phase: "score", bestScore: points };
+    }
+
+    return { phase: "score", bestScore };
+}
+
+/**
  * Checks if a transition between two game phases is allowed.
  * @param from - The current game phase.
  * @param to - The target game phase.
@@ -79,6 +116,7 @@ export const gameStore = createStore<GameStore>()((set, get) => {
 
     return {
         phase: "main_menu",
+        bestScore: loadBestScore(),
         ...initialData(),
 
         start: () => {
@@ -111,7 +149,12 @@ export const gameStore = createStore<GameStore>()((set, get) => {
         },
 
         gameOver: () => {
-            goTo("score");
+            if (!canTransition(get().phase, "score")) {
+                return;
+            }
+
+            const { points, bestScore } = get();
+            set(finishRound(points, bestScore));
         },
 
         quit: () => {
@@ -136,10 +179,13 @@ export const gameStore = createStore<GameStore>()((set, get) => {
             }
 
             const hp = Math.max(0, get().hp - 1);
-            set({
-                hp,
-                ...(hp === 0 ? { phase: "score" as const } : {}),
-            });
+            if (hp > 0) {
+                set({ hp });
+                return;
+            }
+
+            const { points, bestScore } = get();
+            set({ hp, ...finishRound(points, bestScore) });
         },
     };
 });
