@@ -7,6 +7,7 @@ import { PointsPopup } from "../components/PointsPopup";
 import { Loader } from "../core/Loader";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
 import { gameStore } from "../store/gameStore";
+import { SOUND, soundController } from "../core/SoundController";
 
 const FOOD_SPAWN_INTERVAL = 90;
 const CATCH_RADIUS = 65;
@@ -164,6 +165,7 @@ export class Game extends Container {
             ) {
                 food.hit();
                 gameStore.getState().addPoints(POINTS_PER_FOOD);
+                soundController.play(SOUND.CATCH);
                 this._spawnPopup(food.x, food.y);
                 this._shake();
             }
@@ -171,6 +173,7 @@ export class Game extends Container {
             if (!food.isHit && !food.isMissed && food.y > DESIGN_HEIGHT - FOOD_BOTTOM_PADDING) {
                 food.miss();
                 gameStore.getState().loseHp();
+                soundController.play(SOUND.MISS);
                 this._hurt();
             }
 

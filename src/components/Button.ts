@@ -1,4 +1,5 @@
 import { Container, Rectangle, SCALE_MODES, Sprite, Text, TextStyle, Texture, Ticker } from "pixi.js";
+import { SOUND, soundController } from "../core/SoundController";
 
 const FONT_SIZE = 24;
 const DISPLAY_WIDTH = 220;
@@ -61,9 +62,10 @@ export class Button extends Container {
         this.on("pointerup", this._onUp);
         this.on("pointerupoutside", this._onUpOutside);
 
-        if (onClick) {
-            this.on("pointertap", onClick);
-        }
+        this.on("pointertap", () => {
+            soundController.play(SOUND.CLICK);
+            onClick?.();
+        });
 
         Ticker.shared.add(this._tick);
     }
@@ -95,6 +97,7 @@ export class Button extends Container {
 
     private readonly _onOver = (): void => {
         this._hovered = true;
+        soundController.play(SOUND.CLICK);
     };
 
     private readonly _onOut = (): void => {

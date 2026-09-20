@@ -1,0 +1,32 @@
+{
+    "bg": {
+        "src": ["sounds/bg-music.mp3"],
+        "loop": true,
+        "volume": 0.3
+    },
+    "slash": {
+        "variants": [
+            "sounds/slash_01.mp3",
+            "sounds/slash_02.mp3",
+            "sounds/slash_03.mp3"
+        ],
+        "volume": 1
+    },
+    "miss": {
+        "src": ["sounds/ouch.mp3"],
+        "volume": 0.8
+    },
+    "countdown": {
+        "src": ["sounds/count.mp3"],
+        "volume": 0.8
+    },
+    "click": {
+        "src": ["sounds/click.mp3"],
+        "volume": 0.2
+    },
+    "lose_bg": {
+        "src": ["sounds/lose_bg_music.mp3"],
+        "loop": true,
+        "volume": 0.55
+    }
+}

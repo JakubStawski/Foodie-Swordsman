@@ -1,4 +1,4 @@
-import { Application, Container, settings, Ticker } from "pixi.js";
+import { Application, Container, Rectangle, settings, Ticker } from "pixi.js";
 
 settings.ROUND_PIXELS = true;
 
@@ -70,7 +70,9 @@ export class App {
         const scale = Math.min(width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
         this._app.stage.scale.set(scale);
         this._app.stage.eventMode = "static";
-        this._app.stage.hitArea = this._app.screen;
+        // hitArea is in stage-local / design space; screen pixels would clip
+        // the bottom-right once the stage is scaled down to fit the window.
+        this._app.stage.hitArea = new Rectangle(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
     }
 
     /**
