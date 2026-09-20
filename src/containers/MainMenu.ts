@@ -26,8 +26,8 @@ export class MainMenu extends Container {
         const credits = new Button("Credits", font, plaque, () => gameStore.getState().openCredits());
         credits.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42 + BUTTON_GAP * 2);
 
-        this._logo = new Logo(font, loader.getAsset("sword_icon"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 48);
+        this._logo = new Logo(font, loader.getAsset("character"));
+        this._logo.position.set(DESIGN_WIDTH / 2, 80);
 
         this.addChild(this._logo, play, help, credits);
     }
