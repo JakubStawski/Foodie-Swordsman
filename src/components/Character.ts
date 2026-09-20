@@ -10,8 +10,8 @@ const SHEET_LAYOUT: SpriteSheetLayout = {
     frameHeight: 84,
 };
 const DISPLAY_SCALE = 1.3;
-const WALK_SPEED = 2.5;
-const ANIM_SPEED = 0.18;
+const WALK_SPEED = 4.2;
+const ANIM_SPEED = 0.26;
 const CATCH_ANIM_SPEED = 0.25;
 
 /** Frame ranges on character_bitmap (left-to-right, top-to-bottom) */

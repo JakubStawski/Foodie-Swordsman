@@ -114,7 +114,7 @@ export class Stage {
     }
 
     /**
-     * Menu / pause / restart keys. Catch and movement stay on the character.
+     * Escape for pause / back. 
      */
     private _bindFlowKeys(): void {
         window.addEventListener("keydown", (event) => {
@@ -122,7 +122,12 @@ export class Stage {
                 return;
             }
 
-            const { phase, start, pause, resume, quit } = gameStore.getState();
+            const { phase, pause, resume, quit } = gameStore.getState();
+
+            if (event.code === "Space" || event.code === "Enter") {
+                event.preventDefault();
+                return;
+            }
 
             if (event.code === "Escape") {
                 event.preventDefault();
@@ -138,14 +143,6 @@ export class Stage {
 
                 if (phase === "score" || phase === "help" || phase === "credits") {
                     quit();
-                }
-                return;
-            }
-
-            if (event.code === "Space" || event.code === "Enter") {
-                if (phase === "main_menu" || phase === "score") {
-                    event.preventDefault();
-                    start();
                 }
             }
         });
