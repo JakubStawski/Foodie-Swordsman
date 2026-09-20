@@ -7,6 +7,7 @@ const SHEET_LAYOUT: SpriteSheetLayout = {
     frameWidth: 84,
     frameHeight: 84,
 };
+const DISPLAY_SCALE = 1.3;
 const WALK_SPEED = 2.5;
 const ANIM_SPEED = 0.18;
 const CATCH_ANIM_SPEED = 0.25;
@@ -44,7 +45,7 @@ export class Character extends Container {
 
         this._sprite = new AnimatedSprite(this._anims.idle);
         this._sprite.anchor.set(0.5);
-        this._sprite.roundPixels = true;
+        this._sprite.scale.set(DISPLAY_SCALE);
         this._sprite.animationSpeed = ANIM_SPEED;
         this._sprite.loop = true;
         this._sprite.play();

@@ -64,7 +64,6 @@ export class Food extends Container {
         texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
         this._sprite = new Sprite(texture);
         this._sprite.anchor.set(0.5);
-        this._sprite.roundPixels = true;
         this._baseScale = DISPLAY_SCALE;
         this._sprite.scale.set(this._baseScale);
         this.addChild(this._sprite);
