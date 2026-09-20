@@ -18,8 +18,8 @@ const DOUBLE_SPAWN_FROM = 0.38;
 const DOUBLE_SPAWN_CHANCE_MAX = 0.48;
 const MAX_ACTIVE_FOOD = 12;
 
-/** Minimum horizontal gap between a double-spawn pair, in pixels. */
-export const DOUBLE_SPAWN_GAP = 100;
+/** Max horizontal span of foods falling at the same time. Keeps a wave off opposite edges. */
+export const MAX_FOOD_SPREAD = 220;
 
 /**
  * 0 at round start, 1 at the top of the ramp. Eases in so the first seconds stay readable.
@@ -52,7 +52,7 @@ export function rollFallSpeed(difficulty: number): number {
 }
 
 /**
- * Late-game extra spawn so two foods can demand opposite sides of the playfield.
+ * Late-game extra spawn so two foods can fall in the same wave.
  */
 export function shouldDoubleSpawn(difficulty: number, activeCount: number): boolean {
     if (activeCount >= MAX_ACTIVE_FOOD - 1) {

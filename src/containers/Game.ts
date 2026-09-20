@@ -9,7 +9,7 @@ import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
 import {
     canSpawnFood,
     difficultyFromElapsed,
-    DOUBLE_SPAWN_GAP,
+    MAX_FOOD_SPREAD,
     rollFallSpeed,
     shouldDoubleSpawn,
     spawnInterval,
@@ -164,7 +164,7 @@ export class Game extends Container {
             this._spawnTimer = 0;
             const first = this._spawnFood(difficulty);
             if (first && shouldDoubleSpawn(difficulty, this._foods.length)) {
-                this._spawnFood(difficulty, first.x);
+                this._spawnFood(difficulty);
             }
         }
 
@@ -203,41 +203,39 @@ export class Game extends Container {
     /**
      * Spawn a new food item at a random x, with fall speed from the current difficulty.
      * @param difficulty 0–1 ramp value
-     * @param avoidX optional x to keep a double-spawn pair apart
      */
-    private _spawnFood(difficulty: number, avoidX?: number): Food | null {
+    private _spawnFood(difficulty: number): Food | null {
         if (!canSpawnFood(this._foods.length)) {
             return null;
         }
 
         const food = new Food(this._foodTexture, rollFallSpeed(difficulty));
-        food.position.set(this._randomFoodX(avoidX), -20);
+        food.position.set(this._randomFoodX(), -20);
         this._foods.push(food);
         this._foodLayer.addChild(food);
         return food;
     }
 
     /**
-     * Pick a spawn x across the playfield. When avoiding another item, prefer the far side.
-     * @param avoidX x of a food spawned in the same burst
+     * Pick a spawn x. Alone it can be anywhere; with food still falling it stays in that cluster.
      */
-    private _randomFoodX(avoidX?: number): number {
+    private _randomFoodX(): number {
         const min = FOOD_MARGIN;
         const max = DESIGN_WIDTH - FOOD_MARGIN;
+        const xs = this._foods
+            .filter((food) => !food.isHit && !food.isMissed)
+            .map((food) => food.x);
 
-        if (avoidX === undefined) {
+        if (xs.length === 0) {
             return Math.round(min + Math.random() * (max - min));
         }
 
-        for (let i = 0; i < 8; i++) {
-            const x = Math.round(min + Math.random() * (max - min));
-            if (Math.abs(x - avoidX) >= DOUBLE_SPAWN_GAP) {
-                return x;
-            }
-        }
+        const center = (Math.min(...xs) + Math.max(...xs)) / 2;
+        const half = MAX_FOOD_SPREAD / 2;
+        const bandMin = Math.max(min, center - half);
+        const bandMax = Math.min(max, center + half);
 
-        const opposite = avoidX < DESIGN_WIDTH / 2 ? max - 40 : min + 40;
-        return Math.round(opposite);
+        return Math.round(bandMin + Math.random() * (bandMax - bandMin));
     }
 
     /**
