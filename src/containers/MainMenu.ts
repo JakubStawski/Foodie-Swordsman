@@ -1,5 +1,4 @@
 import { Container } from "pixi.js";
-import { Background } from "../components/Background";
 import { Button, BUTTON_GAP } from "../components/Button";
 import { Logo } from "../components/Logo";
 import { Loader } from "../core/Loader";
@@ -7,7 +6,7 @@ import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
 import { gameStore } from "../store/gameStore";
 
 /**
- * Title screen: background, logo, Play! button.
+ * Title screen: logo, Play!, Help, Credits. Scenery lives on the stage.
  */
 export class MainMenu extends Container {
     private readonly _logo: Logo;
@@ -30,18 +29,7 @@ export class MainMenu extends Container {
         this._logo = new Logo(font, loader.getAsset("sword_icon"));
         this._logo.position.set(DESIGN_WIDTH / 2, 48);
 
-        this.addChild(
-            new Background([
-                loader.getAsset("bg_01"),
-                loader.getAsset("bg_02"),
-                loader.getAsset("bg_03"),
-                loader.getAsset("bg_04"),
-            ]),
-            this._logo,
-            play,
-            help,
-            credits,
-        );
+        this.addChild(this._logo, play, help, credits);
     }
 
     /**
