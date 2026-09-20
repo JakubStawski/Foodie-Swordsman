@@ -6,10 +6,17 @@ import { Hearts } from "../components/Hearts";
 import { PointsPopup } from "../components/PointsPopup";
 import { Loader } from "../core/Loader";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
+import {
+    canSpawnFood,
+    difficultyFromElapsed,
+    DOUBLE_SPAWN_GAP,
+    rollFallSpeed,
+    shouldDoubleSpawn,
+    spawnInterval,
+} from "../config/difficulty";
 import { gameStore } from "../store/gameStore";
 import { SOUND, soundController } from "../core/SoundController";
 
-const FOOD_SPAWN_INTERVAL = 90;
 const CATCH_RADIUS = 65;
 const FOOD_MARGIN = 24;
 const FOOD_BOTTOM_PADDING = 48;
@@ -43,6 +50,7 @@ export class Game extends Container {
     private readonly _popups: PointsPopup[] = [];
 
     private _spawnTimer = 0;
+    private _elapsed = 0;
     private _shakeElapsed = 0;
     private _shakeDuration = 0;
     private _shakeMagnitude = SHAKE_MAGNITUDE;
@@ -109,7 +117,8 @@ export class Game extends Container {
     public reset(): void {
         this._clearFoods();
         this._clearPopups();
-        this._spawnTimer = FOOD_SPAWN_INTERVAL;
+        this._elapsed = 0;
+        this._spawnTimer = spawnInterval(0);
         this._shakeDuration = 0;
         this._flashDuration = 0;
         this._flash.alpha = 0;
@@ -147,10 +156,16 @@ export class Game extends Container {
      * @param delta ticker delta time
      */
     private _updateFoods(delta: number): void {
+        this._elapsed += delta;
+        const difficulty = difficultyFromElapsed(this._elapsed);
+
         this._spawnTimer += delta;
-        if (this._spawnTimer >= FOOD_SPAWN_INTERVAL) {
+        if (this._spawnTimer >= spawnInterval(difficulty) && canSpawnFood(this._foods.length)) {
             this._spawnTimer = 0;
-            this._spawnFood();
+            const first = this._spawnFood(difficulty);
+            if (first && shouldDoubleSpawn(difficulty, this._foods.length)) {
+                this._spawnFood(difficulty, first.x);
+            }
         }
 
         for (let i = this._foods.length - 1; i >= 0; i--) {
@@ -186,14 +201,43 @@ export class Game extends Container {
     }
 
     /**
-     * Spawn a new food item at a random x.
+     * Spawn a new food item at a random x, with fall speed from the current difficulty.
+     * @param difficulty 0–1 ramp value
+     * @param avoidX optional x to keep a double-spawn pair apart
      */
-    private _spawnFood(): void {
-        const food = new Food(this._foodTexture);
-        const x = Math.round(FOOD_MARGIN + Math.random() * (DESIGN_WIDTH - FOOD_MARGIN * 2));
-        food.position.set(x, -20);
+    private _spawnFood(difficulty: number, avoidX?: number): Food | null {
+        if (!canSpawnFood(this._foods.length)) {
+            return null;
+        }
+
+        const food = new Food(this._foodTexture, rollFallSpeed(difficulty));
+        food.position.set(this._randomFoodX(avoidX), -20);
         this._foods.push(food);
         this._foodLayer.addChild(food);
+        return food;
+    }
+
+    /**
+     * Pick a spawn x across the playfield. When avoiding another item, prefer the far side.
+     * @param avoidX x of a food spawned in the same burst
+     */
+    private _randomFoodX(avoidX?: number): number {
+        const min = FOOD_MARGIN;
+        const max = DESIGN_WIDTH - FOOD_MARGIN;
+
+        if (avoidX === undefined) {
+            return Math.round(min + Math.random() * (max - min));
+        }
+
+        for (let i = 0; i < 8; i++) {
+            const x = Math.round(min + Math.random() * (max - min));
+            if (Math.abs(x - avoidX) >= DOUBLE_SPAWN_GAP) {
+                return x;
+            }
+        }
+
+        const opposite = avoidX < DESIGN_WIDTH / 2 ? max - 40 : min + 40;
+        return Math.round(opposite);
     }
 
     /**

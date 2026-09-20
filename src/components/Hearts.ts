@@ -1,4 +1,5 @@
 import { Container, SCALE_MODES, Sprite, Texture } from "pixi.js";
+import { INITIAL_HP } from "../config/difficulty";
 import { sliceFrames, type SpriteSheetLayout } from "../utils/animations";
 
 /** hearts.png: 4 frames stacked vertically, 16×16 each. */
@@ -8,7 +9,7 @@ const SHEET_LAYOUT: SpriteSheetLayout = {
     frameHeight: 16,
 };
 
-const HEART_COUNT = 10;
+const HEART_COUNT = INITIAL_HP;
 const HEARTS_PER_ROW = 5;
 const FRAME_FULL = 0;
 const FRAME_EMPTY = 3;
@@ -16,7 +17,7 @@ const DISPLAY_SCALE = 2;
 const HEART_GAP = 2;
 
 /**
- * Ten HUD hearts. Each heart is 1 HP: red when full, gray when empty.
+ * HUD hearts. Each heart is 1 HP: red when full, gray when empty.
  */
 export class Hearts extends Container {
     private readonly _sprites: Sprite[] = [];

@@ -1,4 +1,5 @@
 import { createStore } from "zustand/vanilla";
+import { INITIAL_HP } from "../config/difficulty";
 
 export type GamePhase =
     | "main_menu"
@@ -9,7 +10,6 @@ export type GamePhase =
     | "pause"
     | "score";
 
-export const INITIAL_HP = 10;
 const BEST_SCORE_KEY = "foodie-swordsman.bestScore";
 
 export type GameState = {

@@ -10,7 +10,8 @@ const SHEET_LAYOUT: SpriteSheetLayout = {
 const FRAME_COUNT = 64;
 
 const DISPLAY_SCALE = 2.5;
-const FALL_SPEED = 1.6;
+/** Fallback only — Game passes a difficulty-scaled speed per spawn. */
+const FALL_SPEED = 2.2;
 const PULSE_SPEED = 0.1;
 const PULSE_AMOUNT = 0.07;
 
