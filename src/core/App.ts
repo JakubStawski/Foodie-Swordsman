@@ -1,7 +1,9 @@
-import { Application, Container, Ticker } from "pixi.js";
+import { Application, Container, settings, Ticker } from "pixi.js";
 
-const DESIGN_WIDTH = 450;
-const DESIGN_HEIGHT = 800;
+settings.ROUND_PIXELS = true;
+
+export const DESIGN_WIDTH = 450;
+export const DESIGN_HEIGHT = 800;
 const ASPECT = DESIGN_WIDTH / DESIGN_HEIGHT;
 
 export class App {

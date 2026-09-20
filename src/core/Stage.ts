@@ -1,16 +1,16 @@
 import { Container } from "pixi.js";
 import { App } from "./App";
 import { Loader } from "./Loader";
+import { Background } from "../components/Background";
 import { Character } from "../components/Character";
 import { Food } from "../components/Food";
+import { DESIGN_WIDTH, DESIGN_HEIGHT } from "./App";
 
-const DESIGN_WIDTH = 450;
-const DESIGN_HEIGHT = 800;
 const FOOD_SPAWN_INTERVAL = 90;
-const CATCH_RADIUS = 55;
+const CATCH_RADIUS = 65;
 const FOOD_MARGIN = 24;
 const FOOD_BOTTOM_PADDING = 48;
-const SHAKE_DURATION = 10;
+const SHAKE_DURATION = 12;
 const SHAKE_MAGNITUDE = 4;
 
 /**
@@ -41,6 +41,14 @@ export class Stage {
         this._app.start();
         this._app.stage.addChild(this._world);
 
+        const background = new Background([
+            this._loader.getAsset("bg_01"),
+            this._loader.getAsset("bg_02"),
+            this._loader.getAsset("bg_03"),
+            this._loader.getAsset("bg_04"),
+        ]);
+        this._world.addChild(background);
+
         const character = new Character(this._loader.getAsset("character"));
         character.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT - 120);
         this._world.addChild(character);
@@ -49,6 +57,7 @@ export class Stage {
 
         this._app.ticker.add((delta) => {
             character.update(delta);
+            background.update(character.x);
             this._updateFoods(delta, character);
             this._updateShake(delta);
         });
