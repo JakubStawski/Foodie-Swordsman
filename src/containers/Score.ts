@@ -1,5 +1,4 @@
 import { Container, SCALE_MODES, Text, TextStyle } from "pixi.js";
-import { Background } from "../components/Background";
 import { Button, BUTTON_GAP } from "../components/Button";
 import { Logo } from "../components/Logo";
 import { Loader } from "../core/Loader";
@@ -35,19 +34,7 @@ export class Score extends Container {
         const tryAgain = new Button("Try again", font, plaque, () => gameStore.getState().start());
         tryAgain.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.58 + BUTTON_GAP);
 
-        this.addChild(
-            new Background([
-                loader.getAsset("bg_01"),
-                loader.getAsset("bg_02"),
-                loader.getAsset("bg_03"),
-                loader.getAsset("bg_04"),
-            ]),
-            this._logo,
-            this._yourScore,
-            this._bestScore,
-            mainMenu,
-            tryAgain,
-        );
+        this.addChild(this._logo, this._yourScore, this._bestScore, mainMenu, tryAgain);
     }
 
     /**

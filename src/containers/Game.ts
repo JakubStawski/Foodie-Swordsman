@@ -25,7 +25,7 @@ const HUD_Y = 20;
 const HUD_MARGIN = 20;
 
 /**
- * Playfield: background, character, falling food, HP and score. No logo.
+ * Playfield: character, falling food, HP and score. Shares the stage scenery.
  */
 export class Game extends Container {
     private readonly _world: Container;
@@ -48,19 +48,13 @@ export class Game extends Container {
     private _flashElapsed = 0;
     private _flashDuration = 0;
 
-    constructor(loader: Loader) {
+    constructor(loader: Loader, background: Background) {
         super();
         this.name = "Game";
 
         this._world = new Container();
         this._world.name = "World";
-
-        this._background = new Background([
-            loader.getAsset("bg_01"),
-            loader.getAsset("bg_02"),
-            loader.getAsset("bg_03"),
-            loader.getAsset("bg_04"),
-        ]);
+        this._background = background;
         this._character = new Character(loader.getAsset("character"));
         this._character.position.set(DESIGN_WIDTH / 2, CHARACTER_Y);
         this._foodTexture = loader.getAsset("food");
@@ -77,7 +71,7 @@ export class Game extends Container {
         this._foodMask.renderable = false;
         this._foodLayer.mask = this._foodMask;
 
-        this._world.addChild(this._background, this._foodLayer, this._foodMask, this._character);
+        this._world.addChild(this._foodLayer, this._foodMask, this._character);
 
         const font = loader.getFont("pixelify_sans");
         this._font = font;
@@ -121,11 +115,17 @@ export class Game extends Container {
         this._world.position.set(0, 0);
         this._character.position.set(DESIGN_WIDTH / 2, CHARACTER_Y);
         this._character.setPaused(false);
-        this._background.update(this._character.x);
 
         const { hp, points } = gameStore.getState();
         this._hearts.setHp(hp);
         this._pointsText.text = this._pointsLabel(points);
+    }
+
+    /**
+     * Seat the shared scenery in the playfield so shake and the canopy mask stay aligned.
+     */
+    public mountBackground(): void {
+        this._world.addChildAt(this._background, 0);
     }
 
     /**

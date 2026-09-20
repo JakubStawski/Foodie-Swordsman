@@ -1,5 +1,4 @@
 import { Container, SCALE_MODES, Text, TextStyle } from "pixi.js";
-import { Background } from "../components/Background";
 import { Button } from "../components/Button";
 import { KeyboardSymbol, type KeyboardSheets } from "../components/KeyboardSymbol";
 import { Logo } from "../components/Logo";
@@ -44,19 +43,7 @@ export class Help extends Container {
         );
         back.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.72);
 
-        this.addChild(
-            new Background([
-                loader.getAsset("bg_01"),
-                loader.getAsset("bg_02"),
-                loader.getAsset("bg_03"),
-                loader.getAsset("bg_04"),
-            ]),
-            this._logo,
-            move,
-            catchFood,
-            pause,
-            back,
-        );
+        this.addChild(this._logo, move, catchFood, pause, back);
     }
 
     /**

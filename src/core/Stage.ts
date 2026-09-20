@@ -1,9 +1,10 @@
-import { App } from "./App";
+import { App, DESIGN_WIDTH } from "./App";
 import { Loader } from "./Loader";
+import { Background } from "../components/Background";
 import { MainMenu } from "../containers/MainMenu";
 import { Help } from "../containers/Help";
 import { Credits } from "../containers/Credits";
-import { Countdown } from "../containers/Countdown";
+import { Countdown, COUNTDOWN_MS } from "../containers/Countdown";
 import { Game } from "../containers/Game";
 import { Pause } from "../containers/Pause";
 import { Score } from "../containers/Score";
@@ -14,6 +15,7 @@ import { gameStore, type GamePhase } from "../store/gameStore";
  */
 export class Stage {
     private readonly _app: App;
+    private readonly _background: Background;
     private readonly _mainMenu: MainMenu;
     private readonly _help: Help;
     private readonly _credits: Credits;
@@ -24,11 +26,17 @@ export class Stage {
 
     constructor(app: App, loader: Loader) {
         this._app = app;
+        this._background = new Background([
+            loader.getAsset("bg_01"),
+            loader.getAsset("bg_02"),
+            loader.getAsset("bg_03"),
+            loader.getAsset("bg_04"),
+        ]);
         this._mainMenu = new MainMenu(loader);
         this._help = new Help(loader);
         this._credits = new Credits(loader);
         this._countdown = new Countdown(loader);
-        this._game = new Game(loader);
+        this._game = new Game(loader, this._background);
         this._pause = new Pause(loader);
         this._score = new Score(loader);
 
@@ -41,8 +49,9 @@ export class Stage {
     private _init(): void {
         this._app.start();
 
-        // Pause sits above Game so it can overlay the playfield.
+        // Shared scenery sits at the back; Game takes it into the playfield while playing.
         this._app.stage.addChild(
+            this._background,
             this._mainMenu,
             this._help,
             this._credits,
@@ -58,6 +67,12 @@ export class Stage {
 
         this._app.ticker.add((delta) => {
             const { phase } = gameStore.getState();
+
+            if (phase === "countdown") {
+                this._background.updatePan();
+            } else if (phase !== "game" && phase !== "pause") {
+                this._background.updateIdle(delta);
+            }
 
             if (phase === "main_menu") {
                 this._mainMenu.update(delta);
@@ -149,6 +164,7 @@ export class Stage {
      * @param phase current game phase
      */
     private _applyPhase(phase: GamePhase): void {
+        this._seatBackground(phase);
         this._mainMenu.visible = phase === "main_menu";
         this._help.visible = phase === "help";
         this._credits.visible = phase === "credits";
@@ -160,6 +176,7 @@ export class Stage {
         if (phase === "countdown") {
             this._countdown.reset();
             this._game.reset();
+            this._background.startPanTo(DESIGN_WIDTH / 2, COUNTDOWN_MS);
         }
 
         if (phase === "main_menu") {
@@ -169,5 +186,20 @@ export class Stage {
         if (phase === "score") {
             this._score.refresh();
         }
+    }
+
+    /**
+     * Keep one backdrop: on the stage for menus, inside the playfield during game / pause
+     * so camera shake and the canopy mask stay locked to it.
+     * @param phase current game phase
+     */
+    private _seatBackground(phase: GamePhase): void {
+        if (phase === "game" || phase === "pause") {
+            this._game.visible = true;
+            this._game.mountBackground();
+            return;
+        }
+
+        this._app.stage.addChildAt(this._background, 0);
     }
 }

@@ -1,5 +1,4 @@
 import { Container, SCALE_MODES, Text, TextStyle } from "pixi.js";
-import { Background } from "../components/Background";
 import { Logo } from "../components/Logo";
 import { Loader } from "../core/Loader";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
@@ -8,8 +7,11 @@ import { gameStore } from "../store/gameStore";
 const STEP_MS = 1000;
 const START_VALUE = 3;
 
+/** Wall-clock length of the 3 → 2 → 1 beat. The shared background settles in this time. */
+export const COUNTDOWN_MS = STEP_MS * START_VALUE;
+
 /**
- * Pre-game beat: background, logo, and a 3 → 2 → 1 countdown.
+ * Pre-game beat: logo and a 3 → 2 → 1 countdown. Scenery lives on the stage.
  */
 export class Countdown extends Container {
     private readonly _logo: Logo;
@@ -40,16 +42,7 @@ export class Countdown extends Container {
         this._label.texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
         this._label.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT / 2);
 
-        this.addChild(
-            new Background([
-                loader.getAsset("bg_01"),
-                loader.getAsset("bg_02"),
-                loader.getAsset("bg_03"),
-                loader.getAsset("bg_04"),
-            ]),
-            this._logo,
-            this._label,
-        );
+        this.addChild(this._logo, this._label);
     }
 
     /**
