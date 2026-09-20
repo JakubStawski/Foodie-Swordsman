@@ -1,5 +1,5 @@
-import { Container, SCALE_MODES, Text, TextStyle, Texture } from "pixi.js";
-import { Background } from "../components/Background";
+import { Container, SCALE_MODES, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Background, VEGETATION_LAYER } from "../components/Background";
 import { Character } from "../components/Character";
 import { Food } from "../components/Food";
 import { Loader } from "../core/Loader";
@@ -23,6 +23,8 @@ const HUD_MARGIN = 20;
 export class Game extends Container {
     private readonly _world: Container;
     private readonly _background: Background;
+    private readonly _foodLayer: Container;
+    private readonly _foodMask: Sprite;
     private readonly _character: Character;
     private readonly _hpText: Text;
     private readonly _pointsText: Text;
@@ -50,7 +52,19 @@ export class Game extends Container {
         this._character.position.set(DESIGN_WIDTH / 2, CHARACTER_Y);
         this._foodTexture = loader.getAsset("food");
 
-        this._world.addChild(this._background, this._character);
+        this._foodLayer = new Container();
+        this._foodLayer.name = "FoodLayer";
+        // Pixi shows the layer where the mask is opaque. Food stays visible in
+        // the open air and hides behind the canopy as the background parallaxes.
+        this._foodMask = this._background.createTrackingSprite(
+            loader.getAsset("bg_mask"),
+            VEGETATION_LAYER,
+        );
+        this._foodMask.name = "FoodMask";
+        this._foodMask.renderable = false;
+        this._foodLayer.mask = this._foodMask;
+
+        this._world.addChild(this._background, this._foodLayer, this._foodMask, this._character);
 
         const font = loader.getFont("pixelify_sans");
         this._hpText = this._hudText(this._hpLabel(gameStore.getState().hp), font);
@@ -133,7 +147,7 @@ export class Game extends Container {
             }
 
             if (food.isDone) {
-                this._world.removeChild(food);
+                this._foodLayer.removeChild(food);
                 food.destroy({ children: true });
                 this._foods.splice(i, 1);
             }
@@ -148,7 +162,7 @@ export class Game extends Container {
         const x = Math.round(FOOD_MARGIN + Math.random() * (DESIGN_WIDTH - FOOD_MARGIN * 2));
         food.position.set(x, -20);
         this._foods.push(food);
-        this._world.addChild(food);
+        this._foodLayer.addChild(food);
     }
 
     /**
@@ -156,7 +170,7 @@ export class Game extends Container {
      */
     private _clearFoods(): void {
         for (const food of this._foods) {
-            this._world.removeChild(food);
+            this._foodLayer.removeChild(food);
             food.destroy({ children: true });
         }
         this._foods.length = 0;
