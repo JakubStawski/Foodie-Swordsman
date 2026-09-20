@@ -18,8 +18,8 @@ export class Score extends Container {
         this.name = "Score";
 
         const font = loader.getFont("pixelify_sans");
-        this._logo = new Logo(font, loader.getAsset("sword_icon"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 48);
+        this._logo = new Logo(font, loader.getAsset("character"));
+        this._logo.position.set(DESIGN_WIDTH / 2, 80);
 
         this._yourScore = this._label("Your score: 0", font);
         this._yourScore.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.38);

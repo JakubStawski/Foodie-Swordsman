@@ -22,8 +22,8 @@ export class Help extends Container {
         this.name = "Help";
 
         const font = loader.getFont("pixelify_sans");
-        this._logo = new Logo(font, loader.getAsset("sword_icon"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 48);
+        this._logo = new Logo(font, loader.getAsset("character"));
+        this._logo.position.set(DESIGN_WIDTH / 2, 80);
 
         const sheets: KeyboardSheets = {
             letters: loader.getAsset("keyboard_letters"),
