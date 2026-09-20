@@ -1,166 +1,173 @@
-import { Container } from "pixi.js";
 import { App } from "./App";
 import { Loader } from "./Loader";
-import { Background } from "../components/Background";
-import { Character } from "../components/Character";
-import { Food } from "../components/Food";
-import { Logo } from "../components/Logo";
-import { DESIGN_WIDTH, DESIGN_HEIGHT } from "./App";
-
-const FOOD_SPAWN_INTERVAL = 90;
-const CATCH_RADIUS = 65;
-const FOOD_MARGIN = 24;
-const FOOD_BOTTOM_PADDING = 48;
-const SHAKE_DURATION = 12;
-const SHAKE_MAGNITUDE = 4;
+import { MainMenu } from "../containers/MainMenu";
+import { Help } from "../containers/Help";
+import { Credits } from "../containers/Credits";
+import { Countdown } from "../containers/Countdown";
+import { Game } from "../containers/Game";
+import { Pause } from "../containers/Pause";
+import { Score } from "../containers/Score";
+import { gameStore, type GamePhase } from "../store/gameStore";
 
 /**
- * The main stage of the game.
+ * Owns the screen views and switches them from the game phase.
  */
 export class Stage {
-    private _app: App;
-    private _loader: Loader;
-    private readonly _world: Container;
-    private readonly _foods: Food[] = [];
-    private _spawnTimer = 0;
-    private _shakeElapsed = 0;
-    private _shakeDuration = 0;
+    private readonly _app: App;
+    private readonly _mainMenu: MainMenu;
+    private readonly _help: Help;
+    private readonly _credits: Credits;
+    private readonly _countdown: Countdown;
+    private readonly _game: Game;
+    private readonly _pause: Pause;
+    private readonly _score: Score;
 
     constructor(app: App, loader: Loader) {
         this._app = app;
-        this._loader = loader;
-        this._world = new Container();
-        this._world.name = "World";
+        this._mainMenu = new MainMenu(loader);
+        this._help = new Help(loader);
+        this._credits = new Credits(loader);
+        this._countdown = new Countdown(loader);
+        this._game = new Game(loader);
+        this._pause = new Pause(loader);
+        this._score = new Score(loader);
 
-        this._initGame();
+        this._init();
     }
 
     /**
-     * Initialize the game and all its elements.
+     * Mount views, bind flow keys, and start the ticker.
      */
-    private _initGame(): void {
+    private _init(): void {
         this._app.start();
-        this._app.stage.addChild(this._world);
 
-        const logo = new Logo(
-            this._loader.getFont("pixelify_sans"),
-            this._loader.getAsset("sword_icon"),
+        // Pause sits above Game so it can overlay the playfield.
+        this._app.stage.addChild(
+            this._mainMenu,
+            this._help,
+            this._credits,
+            this._countdown,
+            this._game,
+            this._pause,
+            this._score,
         );
-        logo.position.set(DESIGN_WIDTH / 2, 28);
-        this._app.stage.addChild(logo);
 
-        const background = new Background([
-            this._loader.getAsset("bg_01"),
-            this._loader.getAsset("bg_02"),
-            this._loader.getAsset("bg_03"),
-            this._loader.getAsset("bg_04"),
-        ]);
-        this._world.addChild(background);
-
-        const character = new Character(this._loader.getAsset("character"));
-        character.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT - 120);
-        this._world.addChild(character);
-
-        this._spawnFood();
+        this._applyPhase(gameStore.getState().phase);
+        this._watchPhase();
+        this._bindFlowKeys();
 
         this._app.ticker.add((delta) => {
-            character.update(delta);
-            background.update(character.x);
-            logo.update(delta);
-            this._updateFoods(delta, character);
-            this._updateShake(delta);
+            const { phase } = gameStore.getState();
+
+            if (phase === "main_menu") {
+                this._mainMenu.update(delta);
+                return;
+            }
+
+            if (phase === "help") {
+                this._help.update(delta);
+                return;
+            }
+
+            if (phase === "credits") {
+                this._credits.update(delta);
+                return;
+            }
+
+            if (phase === "countdown") {
+                this._countdown.update(delta);
+                return;
+            }
+
+            if (phase === "game") {
+                this._game.update(delta);
+                return;
+            }
+
+            if (phase === "pause") {
+                this._pause.update(delta);
+                return;
+            }
+
+            this._score.update(delta);
         });
     }
 
     /**
-     * Update the foods on the stage.
-     * @param delta the delta time
-     * @param character the character
+     * Menu / pause / restart keys. Catch and movement stay on the character.
      */
-    private _updateFoods(delta: number, character: Character): void {
-        this._spawnTimer += delta;
-        if (this._spawnTimer >= FOOD_SPAWN_INTERVAL) {
-            this._spawnTimer = 0;
-            this._spawnFood();
-        }
-
-        for (let i = this._foods.length - 1; i >= 0; i--) {
-            const food = this._foods[i];
-            food.update(delta);
-
-            if (
-                character.isCatching &&
-                !food.isHit &&
-                !food.isMissed &&
-                this._overlapsCatch(character, food)
-            ) {
-                food.hit();
-                this._shake();
+    private _bindFlowKeys(): void {
+        window.addEventListener("keydown", (event) => {
+            if (event.repeat) {
+                return;
             }
 
-            if (!food.isHit && !food.isMissed && food.y > DESIGN_HEIGHT - FOOD_BOTTOM_PADDING) {
-                food.miss();
+            const { phase, start, pause, resume, quit } = gameStore.getState();
+
+            if (event.code === "Escape") {
+                event.preventDefault();
+                if (phase === "game") {
+                    pause();
+                    return;
+                }
+
+                if (phase === "pause") {
+                    resume();
+                    return;
+                }
+
+                if (phase === "score" || phase === "help" || phase === "credits") {
+                    quit();
+                }
+                return;
             }
 
-            if (food.isDone) {
-                this._world.removeChild(food);
-                food.destroy({ children: true });
-                this._foods.splice(i, 1);
+            if (event.code === "Space" || event.code === "Enter") {
+                if (phase === "main_menu" || phase === "score") {
+                    event.preventDefault();
+                    start();
+                }
             }
-        }
+        });
     }
 
     /**
-     * Spawn a new food item on the stage.
+     * Show the view that matches the current phase.
      */
-    private _spawnFood(): void {
-        const food = new Food(this._loader.getAsset("food"));
-        const x = Math.round(FOOD_MARGIN + Math.random() * (DESIGN_WIDTH - FOOD_MARGIN * 2));
-        food.position.set(x, -20);
-        this._foods.push(food);
-        this._world.addChild(food);
+    private _watchPhase(): void {
+        gameStore.subscribe((state, prev) => {
+            if (state.phase === prev.phase) {
+                return;
+            }
+
+            this._applyPhase(state.phase);
+        });
     }
 
     /**
-     * Shake the stage. This is camera shake simulation
+     * Toggle view visibility and reset screens that need a fresh round.
+     * @param phase current game phase
      */
-    private _shake(): void {
-        this._shakeElapsed = 0;
-        this._shakeDuration = SHAKE_DURATION;
-    }
+    private _applyPhase(phase: GamePhase): void {
+        this._mainMenu.visible = phase === "main_menu";
+        this._help.visible = phase === "help";
+        this._credits.visible = phase === "credits";
+        this._countdown.visible = phase === "countdown";
+        this._game.visible = phase === "game" || phase === "pause";
+        this._pause.visible = phase === "pause";
+        this._score.visible = phase === "score";
 
-    /**
-     * Update the shake animation.
-     * @param delta the delta time
-     */
-    private _updateShake(delta: number): void {
-        if (this._shakeDuration <= 0) {
-            this._world.position.set(0, 0);
-            return;
-        }
-
-        this._shakeElapsed += delta;
-        if (this._shakeElapsed >= this._shakeDuration) {
-            this._shakeDuration = 0;
-            this._world.position.set(0, 0);
-            return;
+        if (phase === "countdown") {
+            this._countdown.reset();
+            this._game.reset();
         }
 
-        const t = 1 - this._shakeElapsed / this._shakeDuration;
-        const mag = SHAKE_MAGNITUDE * t;
-        this._world.x = Math.round((Math.random() * 2 - 1) * mag);
-        this._world.y = Math.round((Math.random() * 2 - 1) * mag);
-    }
+        if (phase === "main_menu") {
+            this._game.reset();
+        }
 
-    /**
-     * Check if the character overlaps the food.
-     * @param character the character
-     * @param food the food
-     * @returns true if the character overlaps the food
-     */
-    private _overlapsCatch(character: Character, food: Food): boolean {
-        const dx = character.x - food.x;
-        const dy = character.y - food.y;
-        return dx * dx + dy * dy <= CATCH_RADIUS * CATCH_RADIUS;
+        if (phase === "score") {
+            this._score.refresh();
+        }
     }
 }

@@ -1,5 +1,6 @@
 import { AnimatedSprite, Container, Texture } from "pixi.js";
 import { sliceFrames, type FrameRange, type SpriteSheetLayout } from "../utils/animations";
+import { gameStore } from "../store/gameStore";
 
 /** Sprite sheet layout for the character, change this if ever character spritesheet changes */
 const SHEET_LAYOUT: SpriteSheetLayout = {
@@ -52,6 +53,23 @@ export class Character extends Container {
         this.addChild(this._sprite);
 
         this._bindKeys();
+        this._watchPause();
+    }
+
+    /**
+     * Freeze or resume the current clip. AnimatedSprite ticks on its own ticker,
+     * so movement being paused is not enough to stop idle / walk / catch.
+     * @param paused whether the playfield is paused
+     */
+    public setPaused(paused: boolean): void {
+        if (paused) {
+            this._sprite.stop();
+            return;
+        }
+
+        if (!this._sprite.playing) {
+            this._sprite.play();
+        }
     }
 
     /**
@@ -125,7 +143,7 @@ export class Character extends Container {
      */
     private _bindKeys(): void {
         window.addEventListener("keydown", (event) => {
-            if (event.repeat) {
+            if (event.repeat || gameStore.getState().phase !== "game") {
                 return;
             }
 
@@ -148,6 +166,26 @@ export class Character extends Container {
 
         window.addEventListener("keyup", (event) => {
             this._keys.delete(event.code);
+        });
+    }
+
+    /**
+     * Stop the sprite while the game is paused; start it again on resume.
+     */
+    private _watchPause(): void {
+        gameStore.subscribe((state, prev) => {
+            if (state.phase === prev.phase) {
+                return;
+            }
+
+            if (state.phase === "pause") {
+                this.setPaused(true);
+                return;
+            }
+
+            if (state.phase === "game") {
+                this.setPaused(false);
+            }
         });
     }
 

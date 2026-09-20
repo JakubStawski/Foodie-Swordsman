@@ -69,6 +69,8 @@ export class App {
 
         const scale = Math.min(width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
         this._app.stage.scale.set(scale);
+        this._app.stage.eventMode = "static";
+        this._app.stage.hitArea = this._app.screen;
     }
 
     /**
