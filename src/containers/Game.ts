@@ -1,7 +1,9 @@
-import { Container, SCALE_MODES, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Container, Graphics, SCALE_MODES, Sprite, Text, TextStyle, Texture } from "pixi.js";
 import { Background, VEGETATION_LAYER } from "../components/Background";
 import { Character } from "../components/Character";
 import { Food } from "../components/Food";
+import { Hearts } from "../components/Hearts";
+import { PointsPopup } from "../components/PointsPopup";
 import { Loader } from "../core/Loader";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
 import { gameStore } from "../store/gameStore";
@@ -12,6 +14,11 @@ const FOOD_MARGIN = 24;
 const FOOD_BOTTOM_PADDING = 48;
 const SHAKE_DURATION = 12;
 const SHAKE_MAGNITUDE = 4;
+const HURT_SHAKE_DURATION = 18;
+const HURT_SHAKE_MAGNITUDE = 8;
+const HURT_FLASH_DURATION = 16;
+const HURT_FLASH_ALPHA = 0.28;
+const HURT_FLASH_COLOR = 0xcc1a1a;
 const POINTS_PER_FOOD = 10;
 const CHARACTER_Y = DESIGN_HEIGHT - 120;
 const HUD_Y = 20;
@@ -26,14 +33,20 @@ export class Game extends Container {
     private readonly _foodLayer: Container;
     private readonly _foodMask: Sprite;
     private readonly _character: Character;
-    private readonly _hpText: Text;
+    private readonly _hearts: Hearts;
     private readonly _pointsText: Text;
+    private readonly _flash: Graphics;
+    private readonly _font: string;
     private readonly _foodTexture: Texture;
     private readonly _foods: Food[] = [];
+    private readonly _popups: PointsPopup[] = [];
 
     private _spawnTimer = 0;
     private _shakeElapsed = 0;
     private _shakeDuration = 0;
+    private _shakeMagnitude = SHAKE_MAGNITUDE;
+    private _flashElapsed = 0;
+    private _flashDuration = 0;
 
     constructor(loader: Loader) {
         super();
@@ -67,19 +80,27 @@ export class Game extends Container {
         this._world.addChild(this._background, this._foodLayer, this._foodMask, this._character);
 
         const font = loader.getFont("pixelify_sans");
-        this._hpText = this._hudText(this._hpLabel(gameStore.getState().hp), font);
-        this._hpText.anchor.set(0, 0);
-        this._hpText.position.set(HUD_MARGIN, HUD_Y);
+        this._font = font;
+        this._hearts = new Hearts(loader.getAsset("heart"));
+        this._hearts.position.set(HUD_MARGIN, HUD_Y);
+        this._hearts.setHp(gameStore.getState().hp);
 
         this._pointsText = this._hudText(this._pointsLabel(gameStore.getState().points), font);
         this._pointsText.anchor.set(1, 0);
         this._pointsText.position.set(DESIGN_WIDTH - HUD_MARGIN, HUD_Y);
 
-        this.addChild(this._world, this._hpText, this._pointsText);
+        this._flash = new Graphics();
+        this._flash.beginFill(HURT_FLASH_COLOR);
+        this._flash.drawRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+        this._flash.endFill();
+        this._flash.alpha = 0;
+        this._flash.eventMode = "none";
+
+        this.addChild(this._world, this._hearts, this._pointsText, this._flash);
 
         gameStore.subscribe((state, prev) => {
             if (state.hp !== prev.hp) {
-                this._hpText.text = this._hpLabel(state.hp);
+                this._hearts.setHp(state.hp);
             }
             if (state.points !== prev.points) {
                 this._pointsText.text = this._pointsLabel(state.points);
@@ -92,15 +113,18 @@ export class Game extends Container {
      */
     public reset(): void {
         this._clearFoods();
+        this._clearPopups();
         this._spawnTimer = FOOD_SPAWN_INTERVAL;
         this._shakeDuration = 0;
+        this._flashDuration = 0;
+        this._flash.alpha = 0;
         this._world.position.set(0, 0);
         this._character.position.set(DESIGN_WIDTH / 2, CHARACTER_Y);
         this._character.setPaused(false);
         this._background.update(this._character.x);
 
         const { hp, points } = gameStore.getState();
-        this._hpText.text = this._hpLabel(hp);
+        this._hearts.setHp(hp);
         this._pointsText.text = this._pointsLabel(points);
     }
 
@@ -112,7 +136,9 @@ export class Game extends Container {
         this._character.update(delta);
         this._background.update(this._character.x);
         this._updateFoods(delta);
+        this._updatePopups(delta);
         this._updateShake(delta);
+        this._updateFlash(delta);
     }
 
     /**
@@ -138,12 +164,14 @@ export class Game extends Container {
             ) {
                 food.hit();
                 gameStore.getState().addPoints(POINTS_PER_FOOD);
+                this._spawnPopup(food.x, food.y);
                 this._shake();
             }
 
             if (!food.isHit && !food.isMissed && food.y > DESIGN_HEIGHT - FOOD_BOTTOM_PADDING) {
                 food.miss();
                 gameStore.getState().loseHp();
+                this._hurt();
             }
 
             if (food.isDone) {
@@ -177,11 +205,63 @@ export class Game extends Container {
     }
 
     /**
-     * Shake the playfield. This is camera shake simulation.
+     * Pop "+N" beside a caught food. Lives on the world so the canopy mask does not clip it.
+     * @param foodX food world x
+     * @param foodY food world y
      */
-    private _shake(): void {
+    private _spawnPopup(foodX: number, foodY: number): void {
+        const popup = new PointsPopup(POINTS_PER_FOOD, this._font);
+        popup.placeAt(foodX, foodY);
+        this._popups.push(popup);
+        this._world.addChild(popup);
+    }
+
+    /**
+     * Drift popups up and drop them when they fade out.
+     * @param delta ticker delta time
+     */
+    private _updatePopups(delta: number): void {
+        for (let i = this._popups.length - 1; i >= 0; i--) {
+            const popup = this._popups[i];
+            popup.update(delta);
+            if (popup.isDone) {
+                this._world.removeChild(popup);
+                popup.destroy({ children: true });
+                this._popups.splice(i, 1);
+            }
+        }
+    }
+
+    /**
+     * Remove every points popup still on the world.
+     */
+    private _clearPopups(): void {
+        for (const popup of this._popups) {
+            this._world.removeChild(popup);
+            popup.destroy({ children: true });
+        }
+        this._popups.length = 0;
+    }
+
+    /**
+     * Shake the playfield. This is camera shake simulation.
+     * @param duration how long the shake lasts, in ticker ticks
+     * @param magnitude max offset in pixels
+     */
+    private _shake(duration = SHAKE_DURATION, magnitude = SHAKE_MAGNITUDE): void {
         this._shakeElapsed = 0;
-        this._shakeDuration = SHAKE_DURATION;
+        this._shakeDuration = duration;
+        this._shakeMagnitude = magnitude;
+    }
+
+    /**
+     * Hit feedback when a life is lost: stronger shake plus a brief red veil.
+     */
+    private _hurt(): void {
+        this._shake(HURT_SHAKE_DURATION, HURT_SHAKE_MAGNITUDE);
+        this._flashElapsed = 0;
+        this._flashDuration = HURT_FLASH_DURATION;
+        this._flash.alpha = HURT_FLASH_ALPHA;
     }
 
     /**
@@ -202,9 +282,30 @@ export class Game extends Container {
         }
 
         const t = 1 - this._shakeElapsed / this._shakeDuration;
-        const mag = SHAKE_MAGNITUDE * t;
+        const mag = this._shakeMagnitude * t;
         this._world.x = Math.round((Math.random() * 2 - 1) * mag);
         this._world.y = Math.round((Math.random() * 2 - 1) * mag);
+    }
+
+    /**
+     * Fade the hurt flash back to clear.
+     * @param delta ticker delta time
+     */
+    private _updateFlash(delta: number): void {
+        if (this._flashDuration <= 0) {
+            this._flash.alpha = 0;
+            return;
+        }
+
+        this._flashElapsed += delta;
+        if (this._flashElapsed >= this._flashDuration) {
+            this._flashDuration = 0;
+            this._flash.alpha = 0;
+            return;
+        }
+
+        const t = 1 - this._flashElapsed / this._flashDuration;
+        this._flash.alpha = HURT_FLASH_ALPHA * t;
     }
 
     /**
@@ -215,10 +316,6 @@ export class Game extends Container {
         const dx = this._character.x - food.x;
         const dy = this._character.y - food.y;
         return dx * dx + dy * dy <= CATCH_RADIUS * CATCH_RADIUS;
-    }
-
-    private _hpLabel(hp: number): string {
-        return `HP: ${hp}`;
     }
 
     private _pointsLabel(points: number): string {
