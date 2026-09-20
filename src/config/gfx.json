@@ -8,10 +8,11 @@
         "bg_04": "images/bg_04.png",
         "bg_mask": "images/bg_mask.png",
         "heart": "images/hearts.png",
-        "keyboard_letters": "images/keyboard-letters.png",
-        "keyboard_special": "images/keyboard-special.png",
+        "keyboard_letters": "images/keyboard_letters.png",
+        "keyboard_special": "images/keyboard_special.png",
         "sword_icon": "images/sword_icon.png",
-        "button": "images/button.png"
+        "button": "images/button.png",
+        "music_button": "images/music_button.png"
     },
     "fonts": {
         "pixelify_sans": "fonts/PixelifySans-Regular.ttf"

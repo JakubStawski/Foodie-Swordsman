@@ -1,6 +1,7 @@
 import { App, DESIGN_WIDTH } from "./App";
 import { Loader } from "./Loader";
 import { Background } from "../components/Background";
+import { MusicButton } from "../components/MusicButton";
 import { MainMenu } from "../containers/MainMenu";
 import { Help } from "../containers/Help";
 import { Credits } from "../containers/Credits";
@@ -9,6 +10,7 @@ import { Game } from "../containers/Game";
 import { Pause } from "../containers/Pause";
 import { Score } from "../containers/Score";
 import { gameStore, type GamePhase } from "../store/gameStore";
+import { SOUND, soundController } from "./SoundController";
 
 /**
  * Owns the screen views and switches them from the game phase.
@@ -23,6 +25,7 @@ export class Stage {
     private readonly _game: Game;
     private readonly _pause: Pause;
     private readonly _score: Score;
+    private readonly _musicButton: MusicButton;
 
     constructor(app: App, loader: Loader) {
         this._app = app;
@@ -39,6 +42,7 @@ export class Stage {
         this._game = new Game(loader, this._background);
         this._pause = new Pause(loader);
         this._score = new Score(loader);
+        this._musicButton = new MusicButton(loader.getAsset("music_button"));
 
         this._init();
     }
@@ -59,6 +63,7 @@ export class Stage {
             this._game,
             this._pause,
             this._score,
+            this._musicButton,
         );
 
         this._applyPhase(gameStore.getState().phase);
@@ -153,6 +158,22 @@ export class Stage {
         gameStore.subscribe((state, prev) => {
             if (state.phase === prev.phase) {
                 return;
+            }
+
+            if (state.phase === "pause") {
+                soundController.pause(SOUND.BG);
+            } else if (prev.phase === "pause") {
+                soundController.resume(SOUND.BG);
+            }
+
+            if (state.phase === "score") {
+                soundController.stop(SOUND.BG);
+                soundController.stop(SOUND.LOSE_BG);
+                soundController.play(SOUND.LOSE_BG);
+            } else if (prev.phase === "score") {
+                soundController.stop(SOUND.LOSE_BG);
+                soundController.stop(SOUND.BG);
+                soundController.play(SOUND.BG);
             }
 
             this._applyPhase(state.phase);

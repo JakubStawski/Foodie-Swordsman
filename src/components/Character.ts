@@ -1,6 +1,7 @@
 import { AnimatedSprite, Container, Texture } from "pixi.js";
 import { sliceFrames, type FrameRange, type SpriteSheetLayout } from "../utils/animations";
 import { gameStore } from "../store/gameStore";
+import { SOUND, soundController } from "../core/SoundController";
 
 /** Sprite sheet layout for the character, change this if ever character spritesheet changes */
 const SHEET_LAYOUT: SpriteSheetLayout = {
@@ -107,6 +108,7 @@ export class Character extends Container {
         }
 
         this._isCatching = true;
+        soundController.play(SOUND.SLASH);
         this._currentAnim = "catch";
         this._sprite.textures = this._anims.catch;
         this._sprite.loop = false;
