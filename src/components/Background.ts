@@ -4,6 +4,14 @@ import { DESIGN_WIDTH, DESIGN_HEIGHT } from "../core/App";
 /** Parallax strength from farthest (bg_01) to nearest (bg_04). Keep small for a subtle shift. */
 const PARALLAX_FACTORS = [0.04, 0.08, 0.16, 0.24];
 
+/** Vegetation layer (bg_03). Food masks that match its silhouette must track this index. */
+export const VEGETATION_LAYER = 2;
+
+type LayerFollower = {
+    sprite: Sprite;
+    layerIndex: number;
+};
+
 /**
  * Layered parallax background.
  * Layers are drawn back-to-front: bg_01 (sky) → bg_04 (ground).
@@ -12,6 +20,7 @@ const PARALLAX_FACTORS = [0.04, 0.08, 0.16, 0.24];
 export class Background extends Container {
     private readonly _layers: Sprite[] = [];
     private readonly _baseX: number[] = [];
+    private readonly _followers: LayerFollower[] = [];
 
     constructor(textures: Texture[]) {
         super();
@@ -38,6 +47,22 @@ export class Background extends Container {
     }
 
     /**
+     * Sprite laid out like a parallax layer so it stays locked 1:1 with that layer.
+     * Parent it anywhere in the same world; update() copies the tracked layer transform.
+     * @param texture image matching the layer size
+     * @param layerIndex parallax layer to follow (0 = farthest)
+     */
+    public createTrackingSprite(texture: Texture, layerIndex: number): Sprite {
+        const layer = this._layers[layerIndex];
+        const sprite = new Sprite(texture);
+        sprite.roundPixels = true;
+        sprite.scale.copyFrom(layer.scale);
+        sprite.position.copyFrom(layer.position);
+        this._followers.push({ sprite, layerIndex });
+        return sprite;
+    }
+
+    /**
      * Shift layers based on the focus point (here: the character x).
      * Far layers move less than near ones. Offset is clamped so empty edges never show.
      * @param focusX world x to follow
@@ -50,6 +75,12 @@ export class Background extends Container {
             const extra = (layer.width - DESIGN_WIDTH) / 2;
             const shift = Math.max(-extra, Math.min(extra, offset * PARALLAX_FACTORS[i]));
             layer.x = Math.round(this._baseX[i] - shift);
+        }
+
+        for (const follower of this._followers) {
+            const layer = this._layers[follower.layerIndex];
+            follower.sprite.scale.copyFrom(layer.scale);
+            follower.sprite.position.copyFrom(layer.position);
         }
     }
 }
