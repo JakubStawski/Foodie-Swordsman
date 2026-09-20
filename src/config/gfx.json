@@ -5,9 +5,10 @@
         "bg_01": "images/bg_01.png",
         "bg_02": "images/bg_02.png",
         "bg_03": "images/bg_03.png",
-        "bg_04": "images/bg_04.png"
+        "bg_04": "images/bg_04.png",
+        "sword_icon": "images/sword_icon.png"
     },
     "fonts": {
-        "lowres_pixel": "fonts/lowres_pixel.otf"
+        "pixelify_sans": "fonts/PixelifySans-Regular.ttf"
     }
 }
