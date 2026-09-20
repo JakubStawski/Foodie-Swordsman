@@ -4,6 +4,7 @@ import { Loader } from "./Loader";
 import { Background } from "../components/Background";
 import { Character } from "../components/Character";
 import { Food } from "../components/Food";
+import { Logo } from "../components/Logo";
 import { DESIGN_WIDTH, DESIGN_HEIGHT } from "./App";
 
 const FOOD_SPAWN_INTERVAL = 90;
@@ -41,6 +42,13 @@ export class Stage {
         this._app.start();
         this._app.stage.addChild(this._world);
 
+        const logo = new Logo(
+            this._loader.getFont("pixelify_sans"),
+            this._loader.getAsset("sword_icon"),
+        );
+        logo.position.set(DESIGN_WIDTH / 2, 28);
+        this._app.stage.addChild(logo);
+
         const background = new Background([
             this._loader.getAsset("bg_01"),
             this._loader.getAsset("bg_02"),
@@ -58,6 +66,7 @@ export class Stage {
         this._app.ticker.add((delta) => {
             character.update(delta);
             background.update(character.x);
+            logo.update(delta);
             this._updateFoods(delta, character);
             this._updateShake(delta);
         });
