@@ -29,6 +29,8 @@ export class SoundController {
     private readonly _lastVariant = new Map<string, string>();
     private _muted = false;
     private _unlockBound = false;
+    /** Config id of the looping track that currently owns the music slot. */
+    private _musicId: string | undefined;
 
     /**
      * Create Howls from config. Failed files are skipped so missing SFX do not block startup.
@@ -41,6 +43,7 @@ export class SoundController {
         this._playIds.clear();
         this._variantIds.clear();
         this._lastVariant.clear();
+        this._musicId = undefined;
 
         this._muted = this._readMuted();
         Howler.autoUnlock = true;
@@ -51,8 +54,8 @@ export class SoundController {
     }
 
     /**
-     * Play a sound. Looping tracks reuse a single instance; SFX spawn a new one.
-     * Variant groups pick a random clip and skip the one that just played.
+     * Play a sound. Looping tracks share one music slot (one track, one instance);
+     * SFX spawn a new one. Variant groups pick a random clip and skip the last.
      * @param id key from sfx.json
      * @param sprite optional sprite name
      * @returns Howler playback id, or undefined when the sound is not loaded
@@ -69,6 +72,10 @@ export class SoundController {
         for (const howlId of this._howlIds(id)) {
             this._howls.get(howlId)?.stop();
             this._playIds.delete(howlId);
+        }
+
+        if (this._musicId === id || this._howlIds(id).includes(this._musicId ?? "")) {
+            this._musicId = undefined;
         }
     }
 
@@ -210,7 +217,7 @@ export class SoundController {
     }
 
     /**
-     * Start (or keep) the looping background track.
+     * Start (or keep) a looping track. Stops any other music first.
      * @param id looping sound id, defaults to bg
      */
     public startMusic(id = SOUND.BG): void {
@@ -225,6 +232,7 @@ export class SoundController {
             howl.stop();
             this._playIds.delete(id);
         }
+        this._musicId = undefined;
     }
 
     /**
@@ -301,17 +309,22 @@ export class SoundController {
     }
 
     /**
-     * Start a looping track once. Later play/unlock/resume reuse the same Howl id
-     * so a blocked autoplay does not spawn a second overlapping copy.
+     * Start a looping track once. Only one looping track can play; later play/unlock
+     * reuse the same Howl id so a blocked autoplay does not stack a second copy.
      * @param howl looping Howl
      * @param id howl id
      */
     private _playLoop(howl: Howl, id: string): number {
+        this._stopOtherMusic(id);
+        this._musicId = id;
+
         const existing = this._playIds.get(id);
         if (existing !== undefined) {
-            if (!howl.playing(existing)) {
-                howl.play(existing);
+            if (howl.playing(existing)) {
+                return existing;
             }
+
+            howl.play(existing);
             return existing;
         }
 
@@ -367,10 +380,30 @@ export class SoundController {
     }
 
     /**
-     * Start the main background track after the first gesture.
+     * Resume the current music after the first gesture, or start the default track.
      */
     private _playLooping(): void {
+        if (this._musicId !== undefined) {
+            this._playHowl(this._musicId);
+            return;
+        }
+
         this.startMusic();
+    }
+
+    /**
+     * Stop every looping track except the one that should keep playing.
+     * @param keepId looping sound that stays in the music slot
+     */
+    private _stopOtherMusic(keepId: string): void {
+        for (const [id, howl] of this._howls) {
+            if (id === keepId || !this._isLoop(id)) {
+                continue;
+            }
+
+            howl.stop();
+            this._playIds.delete(id);
+        }
     }
 
     private _baseVolume(id: string): number {
@@ -378,7 +411,11 @@ export class SoundController {
     }
 
     private _isLoop(id: string): boolean {
-        return this._defs.get(id)?.loop === true;
+        if (this._defs.get(id)?.loop === true) {
+            return true;
+        }
+
+        return this._howls.get(id)?.loop() === true;
     }
 
     private _readMuted(): boolean {
