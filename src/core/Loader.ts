@@ -1,4 +1,5 @@
 import { Assets, MIPMAP_MODES, SCALE_MODES, Texture } from "pixi.js";
+import { assetUrl } from "../utils/assetUrl";
 import { GfxConfig } from "./types";
 
 /**
@@ -17,13 +18,17 @@ export class Loader {
      * @returns a promise that resolves when all assets are loaded
      */
     public async loadAssets(): Promise<void> {
-        Assets.addBundle("sprites", this._config.sprites);
+        const sprites: Record<string, string> = {};
+        for (const [name, src] of Object.entries(this._config.sprites)) {
+            sprites[name] = assetUrl(src);
+        }
+        Assets.addBundle("sprites", sprites);
 
         const fontBundle: Record<string, { src: string; data: { family: string } }> = {};
 
         for (const [name, src] of Object.entries(this._config.fonts)) {
             fontBundle[name] = {
-                src,
+                src: assetUrl(src),
                 data: { family: name },
             };
             this._fontFamilies[name] = name;

@@ -6,10 +6,14 @@ import { soundController } from "./core/SoundController";
 import gfxConfig from "./config/gfx.json";
 import sfxConfig from "./config/sfx.json";
 
-const app = new App();
-const loader = new Loader(gfxConfig);
+async function main(): Promise<void> {
+    const app = new App();
+    const loader = new Loader(gfxConfig);
 
-await Promise.all([loader.loadAssets(), soundController.load(sfxConfig)]);
-soundController.startMusic();
+    await Promise.all([loader.loadAssets(), soundController.load(sfxConfig)]);
+    soundController.startMusic();
 
-new Stage(app, loader);
+    new Stage(app, loader);
+}
+
+void main();

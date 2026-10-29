@@ -1,4 +1,5 @@
 import { Howl, Howler } from "howler";
+import { assetUrl } from "../utils/assetUrl";
 import { SoundDef, SfxConfig } from "./types";
 
 /**
@@ -257,7 +258,8 @@ export class SoundController {
      * @param def Howl options
      */
     private _registerHowl(id: string, def: SoundDef): Promise<void> {
-        const src = def.src === undefined ? [] : Array.isArray(def.src) ? def.src : [def.src];
+        const rawSrc = def.src === undefined ? [] : Array.isArray(def.src) ? def.src : [def.src];
+        const src = rawSrc.map(assetUrl);
 
         return new Promise((resolve) => {
             const howl = new Howl({

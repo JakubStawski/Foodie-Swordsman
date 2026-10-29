@@ -2,6 +2,8 @@
 
 A pixel browser action game: catch falling food with your sword before it hits the ground. The longer a round lasts, the faster and more often the next bites appear.
 
+**Play:** [jakubstawski.github.io/Foodie-Swordsman](https://jakubstawski.github.io/Foodie-Swordsman/)
+
 Author: [Jakub Stawski](https://github.com/JakubStawski)
 
 ## Rules

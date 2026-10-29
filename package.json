@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/JakubStawski/Foodie-Swordsman/issues"
   },
-  "homepage": "https://github.com/JakubStawski/Foodie-Swordsman#readme",
+  "homepage": "https://jakubstawski.github.io/Foodie-Swordsman/",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
