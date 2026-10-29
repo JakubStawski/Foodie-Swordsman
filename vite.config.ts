@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-    base: process.env.GITHUB_ACTIONS === "true" ? "/Foodie-Swordsman/" : "/",
+    // Relative URLs so dist/ works on GitHub Pages (/Foodie-Swordsman/) and vite preview.
+    base: "./",
 });

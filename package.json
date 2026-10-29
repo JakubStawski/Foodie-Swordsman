@@ -4,7 +4,8 @@
   "description": "falling foodie swordsman game",
   "scripts": {
     "start": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "repository": {
     "type": "git",
