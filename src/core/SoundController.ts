@@ -29,8 +29,18 @@ export class SoundController {
     private readonly _lastVariant = new Map<string, string>();
     private _muted = false;
     private _unlockBound = false;
+    private _unlockArmed = false;
+    private _unlockKick: (() => void) | undefined;
     /** Config id of the looping track that currently owns the music slot. */
     private _musicId: string | undefined;
+    /** Game pause: keep the slot, but do not start or resume it. */
+    private _musicPaused = false;
+    /**
+     * A looping play() was sent to Howler and has not become audible yet.
+     * A second play() in this window stacks another AudioBufferSourceNode,
+     * and stop() cannot see the leaked one.
+     */
+    private _musicStarting = false;
 
     /**
      * Create Howls from config. Failed files are skipped so missing SFX do not block startup.
@@ -44,6 +54,9 @@ export class SoundController {
         this._variantIds.clear();
         this._lastVariant.clear();
         this._musicId = undefined;
+        this._musicPaused = false;
+        this._musicStarting = false;
+        this._disarmMusicUnlock();
 
         this._muted = this._readMuted();
         Howler.autoUnlock = true;
@@ -69,13 +82,16 @@ export class SoundController {
      * @param id key from sfx.json
      */
     public stop(id: string): void {
+        const stopsSlot = this._ownsMusicSlot(id);
+
         for (const howlId of this._howlIds(id)) {
-            this._howls.get(howlId)?.stop();
-            this._playIds.delete(howlId);
+            this._silence(howlId);
         }
 
-        if (this._musicId === id || this._howlIds(id).includes(this._musicId ?? "")) {
+        if (stopsSlot) {
             this._musicId = undefined;
+            this._musicPaused = false;
+            this._musicStarting = false;
         }
     }
 
@@ -84,6 +100,14 @@ export class SoundController {
      * @param id key from sfx.json
      */
     public pause(id: string): void {
+        if (this._ownsMusicSlot(id)) {
+            this._musicPaused = true;
+            this._musicStarting = false;
+            if (!this._audioReady()) {
+                return;
+            }
+        }
+
         for (const howlId of this._howlIds(id)) {
             const howl = this._howls.get(howlId);
             if (!howl) {
@@ -105,6 +129,12 @@ export class SoundController {
      * @param id key from sfx.json
      */
     public resume(id: string): void {
+        if (this._ownsMusicSlot(id)) {
+            this._musicPaused = false;
+            this._flushMusic();
+            return;
+        }
+
         const ids = this._howlIds(id);
         let resumed = false;
 
@@ -228,11 +258,12 @@ export class SoundController {
      * Stop every registered Howl.
      */
     public stopAll(): void {
-        for (const [id, howl] of this._howls) {
-            howl.stop();
-            this._playIds.delete(id);
+        for (const id of this._howls.keys()) {
+            this._silence(id);
         }
         this._musicId = undefined;
+        this._musicPaused = false;
+        this._musicStarting = false;
     }
 
     /**
@@ -302,36 +333,123 @@ export class SoundController {
         }
 
         if (this._isLoop(id)) {
-            return this._playLoop(howl, id);
+            return this._playLoop(id);
         }
 
         return sprite !== undefined ? howl.play(sprite) : howl.play();
     }
 
     /**
-     * Start a looping track once. Only one looping track can play; later play/unlock
-     * reuse the same Howl id so a blocked autoplay does not stack a second copy.
-     * @param howl looping Howl
+     * Switch the music slot to this looping track. Other loops stop.
+     * A track that is already starting or audible is left alone so play() cannot stack.
      * @param id howl id
      */
-    private _playLoop(howl: Howl, id: string): number {
+    private _playLoop(id: string): number | undefined {
         this._stopOtherMusic(id);
+
+        const already = this._musicId === id && (this._musicStarting || this._isHowlPlaying(id));
         this._musicId = id;
+        this._musicPaused = false;
 
-        const existing = this._playIds.get(id);
-        if (existing !== undefined) {
-            if (howl.playing(existing)) {
-                return existing;
-            }
-
-            howl.play(existing);
-            return existing;
+        if (!already) {
+            this._musicStarting = false;
+            this._flushMusic();
         }
 
-        howl.stop();
-        const playId = howl.play();
-        this._playIds.set(id, playId);
-        return playId;
+        return this._playIds.get(id);
+    }
+
+    /**
+     * Start the current music slot once, after the AudioContext is actually running.
+     * Howler queues play() while the context is locked and a second play() there
+     * leaks a buffer source that stop() never reaches.
+     */
+    private _flushMusic(): void {
+        const id = this._musicId;
+        if (!id || this._musicPaused || this._musicStarting) {
+            return;
+        }
+
+        if (!this._audioReady()) {
+            this._armMusicUnlock();
+            return;
+        }
+
+        const howl = this._howls.get(id);
+        if (!howl || this._isHowlPlaying(id)) {
+            return;
+        }
+
+        this._musicStarting = true;
+        const playId = this._playIds.get(id);
+        const started = playId !== undefined ? howl.play(playId) : howl.play();
+
+        if (typeof started === "number") {
+            this._playIds.set(id, started);
+        } else if (playId !== undefined) {
+            this._playIds.delete(id);
+            const fresh = howl.play();
+            if (typeof fresh === "number") {
+                this._playIds.set(id, fresh);
+            }
+        }
+
+        if (this._isHowlPlaying(id)) {
+            this._musicStarting = false;
+            return;
+        }
+
+        const token = id;
+        const done = (): void => {
+            if (this._musicId === token) {
+                this._musicStarting = false;
+            }
+        };
+        howl.once("play", done);
+        howl.once("playerror", done);
+    }
+
+    /**
+     * True when Howler will run play()/stop() now, instead of queueing them behind the unlock.
+     */
+    private _audioReady(): boolean {
+        return Howler.state === "running" && Howler.ctx?.state === "running";
+    }
+
+    /**
+     * Whether any instance of this Howl is audible. Used to refuse a second music start.
+     * @param id howl id
+     */
+    private _isHowlPlaying(id: string): boolean {
+        return this._howls.get(id)?.playing() ?? false;
+    }
+
+    /**
+     * True when this config id is the looping track in the music slot.
+     * @param id key from sfx.json
+     */
+    private _ownsMusicSlot(id: string): boolean {
+        return this._musicId !== undefined && (this._musicId === id || this._howlIds(id).includes(this._musicId));
+    }
+
+    /**
+     * Stop one Howl and forget its playback id.
+     * Skipped until the context is running so a queued stop cannot fire after the next play().
+     * @param id howl id
+     */
+    private _silence(id: string): void {
+        const howl = this._howls.get(id);
+        this._playIds.delete(id);
+
+        if (!howl || !this._audioReady()) {
+            return;
+        }
+
+        try {
+            howl.stop();
+        } catch {
+            // A buffer that already ended throws on stop(); the slot is still free.
+        }
     }
 
     /**
@@ -360,7 +478,7 @@ export class SoundController {
     }
 
     /**
-     * Browsers block audio until a gesture. Retry looping tracks on first input.
+     * Browsers block audio until a gesture. The first input flushes the music slot once.
      */
     private _bindUnlock(): void {
         if (this._unlockBound) {
@@ -368,27 +486,61 @@ export class SoundController {
         }
 
         this._unlockBound = true;
-
-        const unlock = (): void => {
-            this._playLooping();
-            window.removeEventListener("pointerdown", unlock);
-            window.removeEventListener("keydown", unlock);
-        };
-
-        window.addEventListener("pointerdown", unlock);
-        window.addEventListener("keydown", unlock);
+        this._armMusicUnlock();
     }
 
     /**
-     * Resume the current music after the first gesture, or start the default track.
+     * After the next gesture, start the music slot once the AudioContext is running.
      */
-    private _playLooping(): void {
-        if (this._musicId !== undefined) {
-            this._playHowl(this._musicId);
+    private _armMusicUnlock(): void {
+        if (this._unlockArmed) {
             return;
         }
 
-        this.startMusic();
+        this._unlockArmed = true;
+
+        const kick = (): void => {
+            let frames = 0;
+
+            const poll = (): void => {
+                if (!this._unlockArmed) {
+                    return;
+                }
+
+                if (this._audioReady()) {
+                    this._disarmMusicUnlock();
+                    this._flushMusic();
+                    return;
+                }
+
+                frames += 1;
+                if (frames < 180) {
+                    requestAnimationFrame(poll);
+                }
+            };
+
+            requestAnimationFrame(poll);
+        };
+
+        this._unlockKick = kick;
+        window.addEventListener("pointerdown", kick);
+        window.addEventListener("keydown", kick);
+        window.addEventListener("click", kick);
+    }
+
+    /**
+     * Drop the gesture listeners. Safe to call before they exist.
+     */
+    private _disarmMusicUnlock(): void {
+        const kick = this._unlockKick;
+        if (kick) {
+            window.removeEventListener("pointerdown", kick);
+            window.removeEventListener("keydown", kick);
+            window.removeEventListener("click", kick);
+        }
+
+        this._unlockKick = undefined;
+        this._unlockArmed = false;
     }
 
     /**
@@ -396,13 +548,12 @@ export class SoundController {
      * @param keepId looping sound that stays in the music slot
      */
     private _stopOtherMusic(keepId: string): void {
-        for (const [id, howl] of this._howls) {
+        for (const id of this._howls.keys()) {
             if (id === keepId || !this._isLoop(id)) {
                 continue;
             }
 
-            howl.stop();
-            this._playIds.delete(id);
+            this._silence(id);
         }
     }
 
