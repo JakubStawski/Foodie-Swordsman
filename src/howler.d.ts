@@ -71,6 +71,8 @@ declare module "howler" {
         noAudio: boolean;
         autoUnlock: boolean;
         autoSuspend: boolean;
+        /** "suspending" is Howler's own state while `ctx.suspend()` is in flight. */
+        state: AudioContextState | "suspending";
         ctx: AudioContext | null;
         masterGain: GainNode | null;
     }

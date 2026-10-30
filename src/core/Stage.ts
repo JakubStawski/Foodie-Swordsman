@@ -164,12 +164,8 @@ export class Stage {
             }
 
             if (state.phase === "score") {
-                soundController.stop(SOUND.BG);
-                soundController.stop(SOUND.LOSE_BG);
                 soundController.play(SOUND.LOSE_BG);
             } else if (prev.phase === "score") {
-                soundController.stop(SOUND.LOSE_BG);
-                soundController.stop(SOUND.BG);
                 soundController.play(SOUND.BG);
             }
 
