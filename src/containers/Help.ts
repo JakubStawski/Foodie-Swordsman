@@ -22,8 +22,9 @@ export class Help extends Container {
         this.name = "Help";
 
         const font = loader.getFont("pixelify_sans");
+        const centerX = DESIGN_WIDTH / 2;
         this._logo = new Logo(font, loader.getAsset("character"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 80);
+        this._logo.position.set(centerX, 80);
 
         const sheets: KeyboardSheets = {
             letters: loader.getAsset("keyboard_letters"),
@@ -34,14 +35,14 @@ export class Help extends Container {
         const catchFood = this._hint(["Space", "Enter"], [], "Catch", font, sheets);
         const pause = this._hint(["Escape"], [], "Pause", font, sheets);
 
-        move.position.set(DESIGN_WIDTH / 2, FIRST_ROW_Y);
-        catchFood.position.set(DESIGN_WIDTH / 2, FIRST_ROW_Y + ROW_GAP);
-        pause.position.set(DESIGN_WIDTH / 2, FIRST_ROW_Y + ROW_GAP * 2);
+        move.position.set(centerX, FIRST_ROW_Y);
+        catchFood.position.set(centerX, FIRST_ROW_Y + ROW_GAP);
+        pause.position.set(centerX, FIRST_ROW_Y + ROW_GAP * 2);
 
         const back = new Button("Back to main menu", font, loader.getAsset("button"), () =>
             gameStore.getState().quit(),
         );
-        back.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.72);
+        back.position.set(centerX, DESIGN_HEIGHT * 0.72);
 
         this.addChild(this._logo, move, catchFood, pause, back);
     }

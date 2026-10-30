@@ -18,21 +18,22 @@ export class Score extends Container {
         this.name = "Score";
 
         const font = loader.getFont("pixelify_sans");
+        const centerX = DESIGN_WIDTH / 2;
         this._logo = new Logo(font, loader.getAsset("character"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 80);
+        this._logo.position.set(centerX, 80);
 
         this._yourScore = this._label("Your score: 0", font);
-        this._yourScore.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.38);
+        this._yourScore.position.set(centerX, DESIGN_HEIGHT * 0.38);
 
         this._bestScore = this._label("Best score: 0", font);
-        this._bestScore.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.38 + 48);
+        this._bestScore.position.set(centerX, DESIGN_HEIGHT * 0.38 + 48);
 
         const plaque = loader.getAsset("button");
         const mainMenu = new Button("Main menu", font, plaque, () => gameStore.getState().quit());
-        mainMenu.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.58);
+        mainMenu.position.set(centerX, DESIGN_HEIGHT * 0.58);
 
         const tryAgain = new Button("Try again", font, plaque, () => gameStore.getState().start());
-        tryAgain.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.58 + BUTTON_GAP);
+        tryAgain.position.set(centerX, DESIGN_HEIGHT * 0.58 + BUTTON_GAP);
 
         this.addChild(this._logo, this._yourScore, this._bestScore, mainMenu, tryAgain);
     }

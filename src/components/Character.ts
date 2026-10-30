@@ -1,5 +1,6 @@
 import { AnimatedSprite, Container, Texture } from "pixi.js";
 import { sliceFrames, type FrameRange, type SpriteSheetLayout } from "../utils/animations";
+import { DESIGN_WIDTH } from "../core/App";
 import { gameStore } from "../store/gameStore";
 import { SOUND, soundController } from "../core/SoundController";
 
@@ -9,8 +10,9 @@ const SHEET_LAYOUT: SpriteSheetLayout = {
     frameWidth: 84,
     frameHeight: 84,
 };
-const DISPLAY_SCALE = 1.3;
-const WALK_SPEED = 4.2;
+const DISPLAY_SCALE = 1.8;
+const WALK_SPEED = 5.6;
+const HALF_WIDTH = (SHEET_LAYOUT.frameWidth * DISPLAY_SCALE) / 2;
 const ANIM_SPEED = 0.26;
 const CATCH_ANIM_SPEED = 0.25;
 
@@ -97,6 +99,8 @@ export class Character extends Container {
             this._play("walkRight");
             this.x += this._speed * delta;
         }
+
+        this.x = Math.max(HALF_WIDTH, Math.min(DESIGN_WIDTH - HALF_WIDTH, this.x));
     }
 
     /**

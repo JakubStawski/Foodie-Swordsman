@@ -23,15 +23,16 @@ export class Pause extends Container {
         dim.hitArea = new Rectangle(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
 
         const font = loader.getFont("pixelify_sans");
+        const centerX = DESIGN_WIDTH / 2;
         this._logo = new Logo(font, loader.getAsset("character"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 80);
+        this._logo.position.set(centerX, 80);
 
         const plaque = loader.getAsset("button");
         const resume = new Button("Resume", font, plaque, () => gameStore.getState().resume());
-        resume.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.48);
+        resume.position.set(centerX, DESIGN_HEIGHT * 0.48);
 
         const exit = new Button("Exit", font, plaque, () => gameStore.getState().quit());
-        exit.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.48 + BUTTON_GAP);
+        exit.position.set(centerX, DESIGN_HEIGHT * 0.48 + BUTTON_GAP);
 
         this.addChild(dim, this._logo, resume, exit);
     }

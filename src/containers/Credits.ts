@@ -17,7 +17,8 @@ export class Credits extends Container {
 
         const font = loader.getFont("pixelify_sans");
         this._logo = new Logo(font, loader.getAsset("character"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 80);
+        const centerX = DESIGN_WIDTH / 2;
+        this._logo.position.set(centerX, 80);
 
         const author = new Text(
             "Author: Jakub Stawski",
@@ -35,12 +36,12 @@ export class Credits extends Container {
         author.anchor.set(0.5);
         author.roundPixels = true;
         author.texture.baseTexture.scaleMode = SCALE_MODES.NEAREST;
-        author.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.48);
+        author.position.set(centerX, DESIGN_HEIGHT * 0.48);
 
         const back = new Button("Back to main menu", font, loader.getAsset("button"), () =>
             gameStore.getState().quit(),
         );
-        back.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.72);
+        back.position.set(centerX, DESIGN_HEIGHT * 0.72);
 
         this.addChild(this._logo, author, back);
     }

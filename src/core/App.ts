@@ -2,8 +2,9 @@ import { Application, Container, Rectangle, settings, Ticker } from "pixi.js";
 
 settings.ROUND_PIXELS = true;
 
-export const DESIGN_WIDTH = 450;
-export const DESIGN_HEIGHT = 800;
+/** Square playfield. Backgrounds are 320×180 at 5×, so the sides stay free for parallax. */
+export const DESIGN_WIDTH = 900;
+export const DESIGN_HEIGHT = 900;
 const ASPECT = DESIGN_WIDTH / DESIGN_HEIGHT;
 
 export class App {
@@ -15,6 +16,7 @@ export class App {
             height: DESIGN_HEIGHT,
             antialias: false,
             backgroundAlpha: 0,
+            autoDensity: true,
             resolution: Math.min(window.devicePixelRatio || 1, 2),
         });
 

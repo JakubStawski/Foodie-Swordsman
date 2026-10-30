@@ -17,8 +17,8 @@ import {
 import { gameStore } from "../store/gameStore";
 import { SOUND, soundController } from "../core/SoundController";
 
-const CATCH_RADIUS = 65;
-const FOOD_MARGIN = 24;
+const CATCH_RADIUS = 90;
+const FOOD_MARGIN = 40;
 const FOOD_BOTTOM_PADDING = 48;
 const SHAKE_DURATION = 12;
 const SHAKE_MAGNITUDE = 4;
@@ -28,7 +28,7 @@ const HURT_FLASH_DURATION = 16;
 const HURT_FLASH_ALPHA = 0.28;
 const HURT_FLASH_COLOR = 0xcc1a1a;
 const POINTS_PER_FOOD = 10;
-const CHARACTER_Y = DESIGN_HEIGHT - 120;
+const CHARACTER_Y = DESIGN_HEIGHT - 150;
 const HUD_Y = 20;
 const HUD_MARGIN = 20;
 

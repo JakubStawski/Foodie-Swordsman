@@ -1,6 +1,11 @@
+html,
 body {
     margin: 0;
     padding: 0;
+    overflow: hidden;
+}
+
+body {
     background-color: #303030;
     color: #fff;
     display:flex;

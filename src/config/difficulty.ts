@@ -5,7 +5,7 @@ export const INITIAL_HP = 10;
 const RAMP_TICKS = 60 * 80;
 
 const FALL_SPEED_MIN = 2.2;
-const FALL_SPEED_MAX = 4.8;
+const FALL_SPEED_MAX = 4.2;
 /** ± spread around the current base speed so items in one wave are not identical. */
 const SPEED_SPREAD = 0.3;
 const RUSH_CHANCE_START = 0.08;
@@ -19,7 +19,7 @@ const DOUBLE_SPAWN_CHANCE_MAX = 0.48;
 const MAX_ACTIVE_FOOD = 12;
 
 /** Max horizontal span of foods falling at the same time. Keeps a wave off opposite edges. */
-export const MAX_FOOD_SPREAD = 220;
+export const MAX_FOOD_SPREAD = 360;
 
 /**
  * 0 at round start, 1 at the top of the ramp. Eases in so the first seconds stay readable.

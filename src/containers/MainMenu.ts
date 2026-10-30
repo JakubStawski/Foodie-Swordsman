@@ -17,17 +17,18 @@ export class MainMenu extends Container {
 
         const font = loader.getFont("pixelify_sans");
         const plaque = loader.getAsset("button");
+        const centerX = DESIGN_WIDTH / 2;
         const play = new Button("Play!", font, plaque, () => gameStore.getState().start());
-        play.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42);
+        play.position.set(centerX, DESIGN_HEIGHT * 0.42);
 
         const help = new Button("Help", font, plaque, () => gameStore.getState().openHelp());
-        help.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42 + BUTTON_GAP);
+        help.position.set(centerX, DESIGN_HEIGHT * 0.42 + BUTTON_GAP);
 
         const credits = new Button("Credits", font, plaque, () => gameStore.getState().openCredits());
-        credits.position.set(DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.42 + BUTTON_GAP * 2);
+        credits.position.set(centerX, DESIGN_HEIGHT * 0.42 + BUTTON_GAP * 2);
 
         this._logo = new Logo(font, loader.getAsset("character"));
-        this._logo.position.set(DESIGN_WIDTH / 2, 80);
+        this._logo.position.set(centerX, 80);
 
         this.addChild(this._logo, play, help, credits);
     }
